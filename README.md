@@ -14,5 +14,5 @@ Some of the following settings are suggested
 - Set time step "t_step" at around L.167. It is suggested to set 0.01
 - Set riparian "gap" at around L.142      Here, I set 5 meters
 - Set 'list_sbs' at aroud L.131:          with the list of sub-basins. If you want to run this for all the sun-basins, set a list with their number. For instance,
-  * if you watershed has 60 sub-basins, set:list_sbs = list(range(0, n_sbs)) 
+  * if you watershed has 60 sub-basins, set:    list_sbs = list(range(0, n_sbs)) 
   * if you want to run only for sub-basins 21 and 26, set: list_sbs = [20, 25] 
