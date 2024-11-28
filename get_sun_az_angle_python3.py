@@ -160,20 +160,12 @@ def calc_sun_az_angle (list_input):
 
     saa1 = ((math.sin(d2r(latt))*math.cos(d2r(sol_zang))) - math.sin(d2r(sun_dec)))
     saa2 = (math.cos(d2r(latt))*math.sin(d2r(sol_zang)))
-    #print(saa1, saa2)
-    rate_saa1_saa2 = saa1/saa2
-    
-    if rate_saa1_saa2 > 1:
-        rate_saa1_saa2 = 1
-        
     if hour_ang > 0:
         #print("ch_1")
-        #sol_az_ang = (r2d(math.acos(saa1/saa2))+180) % 360
-        sol_az_ang = (r2d(math.acos(rate_saa1_saa2))+180) % 360
+        sol_az_ang = (r2d(math.acos(saa1/saa2))+180) % 360
     else:
         #print("ch_2")
-        #sol_az_ang = (540-r2d(math.acos(saa1/saa2))) % 360
-        sol_az_ang = (540-r2d(math.acos(rate_saa1_saa2))) % 360
+        sol_az_ang = (540-r2d(math.acos(saa1/saa2))) % 360
 
     #print "sol_elev_cor: ", sol_elev_cor
     #print "sol_az_ang: ", sol_az_ang
@@ -189,6 +181,9 @@ if __name__ == "__main__":
     print (sun_angle, az_angle)
 
     print ("donee...")
+
+
+
 
 
 

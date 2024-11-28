@@ -25,6 +25,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 #from datetime import datetime
 #from random import randrange
+from tqdm import tqdm
 
 ### import of own functions
 #import get_sun_az_angle as sa_ang  # call own functions/files   for Python2
@@ -39,9 +40,10 @@ start_time = time.perf_counter ()
 def colored(r, g, b, text):
     return f"\033[38;2;{r};{g};{b}m{text}\033[0m"
 
-### Read atmospheric angle data
+### Read topographic angle data
 l_atm_ang = []
-with open('in01_topog_angle.csv', 'r') as file:
+#with open('input_data/in01_topog_angle.csv', 'r') as file:
+with open('input_data/in01_topog_angle_zeros.csv', 'r') as file:  # This file with zeros is optional when topography factor is not considered
     # (0)0 deg, (1)45, (2)90, (3)135, (4)180, (5)225, (6)270, (7)315
     reader1 = csv.reader(file)
     next(reader1)
@@ -68,9 +70,12 @@ strm_db = []
 # (3) Efficient riparian vegetation case: Data with the maximum left or right bank tree height according its azimute.
 # (4) Efficient riparian vegetation case2: Data with the maximum left or right bank tree height according its azimute.
 
-sf_case = ['in02_stream_data_L0_R0.csv','in02_stream_data_LN_RN.csv','in02_stream_data_LM_RM.csv',
-           'in02_stream_data_LR_effic.csv','in02_stream_data_LR_effic2.csv']
-sf_id = 3  #  <-------------- SET
+sf_case = ['input_data/in02_stream_data_L0_R0.csv',      # Scenario: no riparian vegetation
+           'input_data/in02_stream_data_LN_RN.csv',      # Scenario: Current riparian vegetatio
+           'input_data/in02_stream_data_LM_RM.csv',      # Scenario: Maximum riparian vegetation
+           #'input_data/in02_stream_data_LR_effic.csv',  # Deprecated
+           'input_data/in02_stream_data_LR_effic2.csv']  # Scenario: Efficient riparian vegetation
+sf_id = 1  #  <-------------- SET
 
 with open(sf_case[sf_id], 'r') as file:
     # (1)Long,(2)Lat, (3)R_h-tree, (4)L_h-tree, (5)Str_Az, (6)Str_W, (7)Str_Len
@@ -88,7 +93,8 @@ with open(sf_case[sf_id], 'r') as file:
 
 ### Read SR data
 sr_db = []
-with open('in03_SR_data_2019.csv', 'r') as file:  # Solar Radiation Data
+#with open('input_data/in03_SR_data_2019_ones.csv', 'r') as file:  # Solar Radiation Data
+with open('input_data/in03_SR_data_2019.csv', 'r') as file:  # Solar Radiation Data
     # (1)date, (2)SR
     reader3 = csv.reader(file)
     next(reader3)
@@ -126,16 +132,17 @@ sf_allf = []
 
 print ("len-stream DB:",len(strm_db))
 
-n_sbs = 60 #60#len(strm_db)
+n_sbs = 5 #60#len(strm_db)                                                     # SET the # of sub-basins to run
 ### For loop through all the SBs
 list_sbs = list(range(0, n_sbs)) ### List of sub-basins
-list_sbs = [20, 25] ### List of sub-basins (For SB-21 set 20)
+#list_sbs = [0, 21] ### List of sub-basins (For SB-21 set 20)
 print ("List_of_Sub-basins: ", list_sbs)
 
 ### Loop through the set sub-basins
+#for sb in tqdm(list_sbs, desc="Processing"):
 for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
     #print (sb)  # It starts from 0 to 59
-    print(colored(255, 0, 255, ("Sub-basin: "+ str(sb+1))))
+    print(colored(0, 250, 255, ("Sub-basin: "+ str(sb+1))))
 
     ### Site information
     longg = strm_db[sb][0] # -123.206# -122.65 # -105 # Longitude
@@ -155,9 +162,10 @@ for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
     sf_yr_all = []
 
     ### Loop through Days
-    for dy in range(len(lt_days)):
+    for dy in tqdm(range(len(lt_days)), desc="Processing"):
+        #for dy in range(len(lt_days)):
         #print "dy:",dy
-        if (lt_n_day[dy]%20 ==0 or lt_n_day[dy]==365): print ("SB",(sb+1)," Day",lt_n_day[dy], "  Julian_d:", lt_days[dy])
+        #if (lt_n_day[dy]%20 ==0 or lt_n_day[dy]==365): print ("SB",(sb+1)," Day",lt_n_day[dy], "  Julian_d:", lt_days[dy])
         #print "Day",lt_n_day[dy], "   Julian_day:", lt_days[dy]
         pot_dy_sr = 0 # Potential day Solar Rad
         sr_dy_blk_top = 0 # SR day blocked by Topography
@@ -168,11 +176,12 @@ for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
         #print adsa
 
         ### Time information - Hours and fractions
-        t_step = 0.01 #0.01 #0.1 #1 # 0.1 means fraction of 1 hours  # <-------- SET
+        t_step = 0.1 #0.01 #0.1 #1 # 0.1 means fraction of 1 hours  # <-------- SET
         #print "Time step:", t_step
         lt_past = np.arange(0, 24, t_step)
-        #print len(lt_past)
-        #print "Number of day-fractions: ",lt_past
+        #print (len(lt_past))
+        #print ("Number of day-fractions: ",lt_past)
+        #print(wwwwww)
 
         list_sa = []
         list_az = []
@@ -184,10 +193,14 @@ for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
             #listd = list_input = [latt, longg, t_zone, j_day, tp/24.]
             listd = list_input = [latt, longg, t_zone, lt_days[dy], tp/24.]
             sa,az,sunset = sa_ang.calc_sun_az_angle (listd)  # ---->  Call function
+            #print("L.190: ", tp,sa,az)
+            
+            
             list_sa.append(sa)
             list_az.append(az)
-            #print "L.109 sa & sunset:",sa, sunset
-            #print az
+            #print ("L.196 sa & sunset:",sa, sunset)
+            #print ("Az:", az)
+            
 
             ### Calc hourly SolRad
             tss = 24.*sunset # day = lt_n_day[dy]
@@ -199,8 +212,6 @@ for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
             # Solar radiation at tp instant
             sr_hr = lt_n_day[dy] * aa + bb * lt_n_day[dy] * math.cos(2*math.pi*tp/24)
             #print "test"
-            #print tp, bb, aa, sr_hr
-            
 
             if sa>0: # If solar angle > 0 do calculations
                 
@@ -285,8 +296,11 @@ for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
                     sr_dy_blk_RL_tree += SR_blk_L + SR_blk_R
                     
         sr_dy_blk_all = sr_dy_blk_top + sr_dy_blk_RL_tree
+        #print(www)
                         
-        #print "pot_day_Sol-Rad:", pot_dy_sr
+        #print("pot_day_Sol-Rad:", pot_dy_sr)
+        #print(sr_dy_blk_top, sr_dy_blk_L_tree, sr_dy_blk_R_tree, sr_dy_blk_all)
+        
         #print "SR blocked by topog:", sr_dy_blk_top # SR day blocked by topog
         #print "SR blocked by R-tree:", sr_dy_blk_R_tree # SR day blocked by R-tree
         #print "SR blocked by L-tree:", sr_dy_blk_L_tree # SR day blocked by L-tree
@@ -298,6 +312,8 @@ for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
         sf_L_tree = sr_dy_blk_L_tree/pot_dy_sr
         sf_RL_tree = sr_dy_blk_RL_tree/pot_dy_sr
         sf_all = sr_dy_blk_all/pot_dy_sr
+        #print("++++++++++++ : ",sb, sf_top, sf_L_tree, sf_R_tree, sf_all)
+        #print(dsds)
         #print "SF by topog:", sf_top # SF day by topog
         #print "SF by R-tree:", sf_R_tree # SF day by R-tree
         #print "SF by L-tree:", sf_L_tree # SF day by L-tree
@@ -346,15 +362,15 @@ for sb in list_sbs:#range(n_sbs):#[28]:#  #  <-----  It may SET
         #'''
 
     from pprint import pprint
-    print ("Shade Factor by Topographic")
-    #print sf_yr_top# pprint (sf_yr_top)
-    print ("Shade Factor by R-Tree")
+    #print ("Shade Factor by Topographic")
+    #pprint(sf_yr_top)# pprint (sf_yr_top)
+    #print ("Shade Factor by R-Tree")
     #print sf_yr_R_tree
-    print ("Shade Factor by L-Tree")
+    #print ("Shade Factor by L-Tree")
     #print sf_yr_L_tree
-    print ("Shade Factor by RL-Tree")
+    #print ("Shade Factor by RL-Tree")
     #print sf_yr_RL_tree
-    print ("Shade Factor by ALL")
+    #print ("Shade Factor by ALL")
     #print sf_yr_all
 
     ### set Shade-Factor final files
@@ -430,17 +446,17 @@ with open("001_SF_topography.csv", "w", newline="") as f1:
 with open("002_SF_Right_bank_tree.csv", "w", newline="") as f1:
     writer = csv.writer(f1)
     writer.writerows([head])
-    writer.writerows(sf_topft)
+    writer.writerows(sf_Rft)
 
 with open("003_SF_Left_bank_tree.csv", "w", newline="") as f1:
     writer = csv.writer(f1)
     writer.writerows([head])
-    writer.writerows(sf_topft)
+    writer.writerows(sf_Lft)
 
 with open("004_SF_all_together.csv", "w", newline="") as f1:
     writer = csv.writer(f1)
     writer.writerows([head])
-    writer.writerows(sf_topft)
+    writer.writerows(sf_allft)
 
 #print ("done...")
 #end_time = datetime.now()
